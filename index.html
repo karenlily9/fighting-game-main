@@ -1,0 +1,397 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Epic Fighting Arena</title>
+    <style>
+        @font-face {
+            font-family: 'silver';
+            src: url(../assets/fonts/Silver.ttf);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: linear-gradient(135deg, #1a1a2e, #16213e, #0f3460);
+            color: #fff;
+            font-family: 'Arial', sans-serif;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-start;
+            padding: 30px 0;
+        }
+
+        .game-container {
+            width: 1024px;
+            max-width: 95vw;
+            position: relative;
+        }
+
+        /* Menu Styling */
+        .menu {
+            font-family: 'silver', cursive;
+            position: absolute;
+            width: 100%;
+            height: 576px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            background: rgba(0, 0, 0, 0.7);
+            border-radius: 15px;
+            backdrop-filter: blur(5px);
+            z-index: 10;
+        }
+
+        .title {
+            font-size: 100px;
+            text-align: center;
+            margin-bottom: 40px;
+            text-transform: uppercase;
+            background-image: linear-gradient(
+                -225deg,
+                #6a11cb 0%,
+                #2575fc 29%,
+                #7303c0 67%,
+                #ec38bc 100%
+            );
+            background-size: 200% auto;
+            background-clip: text;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            animation: textclip 2s linear infinite;
+            text-shadow: 0 0 20px rgba(255, 255, 255, 0.3);
+        }
+
+        .options {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .menuOption {
+            background: rgba(255, 255, 255, 0.1);
+            border: 2px solid #7303c0;
+            border-radius: 8px;
+            font-size: 32px;
+            padding: 15px 40px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        .menuOption:hover {
+            background: rgba(115, 3, 192, 0.8);
+            transform: translateY(-5px);
+            box-shadow: 0 8px 25px rgba(115, 3, 192, 0.4);
+        }
+
+        .menuOption::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(
+                90deg,
+                transparent,
+                rgba(255, 255, 255, 0.2),
+                transparent
+            );
+            transition: 0.4s;
+        }
+
+        .menuOption:hover::after {
+            left: 100%;
+        }
+
+        /* HUD Styling */
+        .hud {
+            position: absolute;
+            display: none;
+            width: 100%;
+            padding: 15px;
+            top: 10px;
+            z-index: 5;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .healthLayout {
+            position: relative;
+            height: 25px;
+            width: 40%;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 0 15px rgba(0, 0, 0, 0.5);
+        }
+
+        #playerHealth {
+            left: 0;
+            right: initial;
+            border-radius: 12px;
+        }
+
+        #enemyHealth {
+            right: 0;
+            left: initial;
+            border-radius: 12px;
+        }
+
+        .remainingHealthbar {
+            background: linear-gradient(90deg, #ff416c, #ff4b2b);
+            height: 100%;
+            width: 100%;
+        }
+
+        .totalHealthBar {
+            position: absolute;
+            background: linear-gradient(90deg, #4facfe, #00f2fe);
+            top: 0;
+            bottom: 0;
+            width: 100%;
+            transition: width 0.3s ease-out;
+        }
+
+        .timer {
+            background: rgba(0, 0, 0, 0.5);
+            font-family: 'silver', monospace;
+            font-size: 32px;
+            height: 50px;
+            width: 80px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
+            border: 2px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .result {
+            position: absolute;
+            font-family: 'silver', sans-serif;
+            font-size: 80px;
+            font-weight: bold;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            top: 0;
+            right: 0;
+            bottom: 0;
+            left: 0;
+            z-index: 20;
+            background: rgba(0, 0, 0, 0.7);
+            color: #fff;
+            text-shadow: 0 0 10px #ff00ff, 0 0 20px #ff00ff, 0 0 30px #ff00ff;
+            animation: pulse 1.5s infinite alternate;
+            border-radius: 15px;
+        }
+
+        /* Game Canvas */
+        .game {
+            display: flex;
+            width: 100%;
+            align-items: center;
+            justify-content: center;
+        }
+
+        #gameWindow {
+            border: 4px solid rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            box-shadow: 0 0 30px rgba(0, 0, 0, 0.6);
+            background: rgba(10, 10, 30, 0.3);
+        }
+
+        /* Controls Info */
+        .information {
+            margin-top: 30px;
+            width: 1024px;
+            max-width: 95vw;
+        }
+
+        .keymapping {
+            display: flex;
+            justify-content: center;
+            gap: 30px;
+            font-family: 'silver', sans-serif;
+            flex-wrap: wrap;
+        }
+
+        .keys {
+            background: rgba(0, 0, 0, 0.5);
+            border-radius: 15px;
+            padding: 25px;
+            flex: 1;
+            min-width: 250px;
+            max-width: 450px;
+            border: 2px solid rgba(115, 3, 192, 0.5);
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.3);
+            transition: all 0.3s ease;
+        }
+
+        .keys:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px rgba(115, 3, 192, 0.4);
+        }
+
+        .keys h1 {
+            font-size: 28px;
+            margin-bottom: 15px;
+            text-align: center;
+            color: #ec38bc;
+            text-shadow: 0 0 5px #ec38bc;
+        }
+
+        .keys p {
+            font-size: 18px;
+            margin: 10px 0;
+            display: flex;
+            align-items: center;
+        }
+
+        .key {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 5px 10px;
+            border-radius: 5px;
+            margin-right: 10px;
+            font-weight: bold;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            min-width: 35px;
+            text-align: center;
+        }
+
+        /* Animations */
+        @keyframes textclip {
+            to {
+                background-position: 200% center;
+            }
+        }
+
+        @keyframes pulse {
+            from {
+                opacity: 0.7;
+            }
+            to {
+                opacity: 1;
+            }
+        }
+
+        .footer {
+            margin-top: 20px;
+            font-size: 14px;
+            opacity: 0.7;
+            text-align: center;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .title {
+                font-size: 60px;
+            }
+            
+            .menuOption {
+                font-size: 24px;
+                padding: 12px 30px;
+            }
+            
+            .keys {
+                padding: 15px;
+            }
+            
+            .keys h1 {
+                font-size: 24px;
+            }
+            
+            .keys p {
+                font-size: 16px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="game-container">
+        <!-- Main Menu -->
+        <div id="menu" class="menu">
+            <div class="title">
+                Epic Fighting Arena
+            </div>
+            <div class="options">
+                <div id="1hero" class="menuOption">
+                    Player vs AI
+                </div>
+                <div id="2heros" class="menuOption">
+                    Player vs Player
+                </div>
+            </div>
+        </div>
+
+        <!-- HUD (Heads Up Display) -->
+        <div id="hud" class="hud">
+            <!-- Player's health -->
+            <div class="healthLayout">
+                <div class="remainingHealthbar"></div>
+                <div id="heroHealth" class="totalHealthBar"></div>
+            </div>
+            
+            <!-- Timer -->
+            <div id="timer" class="timer">--</div>
+            
+            <!-- Enemy's health -->
+            <div class="healthLayout">
+                <div class="remainingHealthbar"></div>
+                <div id="villainHealth" class="totalHealthBar"></div>
+            </div>
+        </div>
+        
+        <!-- Result Display -->
+        <div id="result" class="result">FIGHT!</div>
+        
+        <!-- Game Canvas -->
+        <div class="game">
+            <canvas id="gameWindow"></canvas>
+        </div>
+    </div>
+
+    <!-- Controls Information -->
+    <div class="information">
+        <div class="keymapping">
+            <div class="keys">
+                <h1>Player 1</h1>
+                <p><span class="key">W</span> Jump</p>
+                <p><span class="key">A</span> Move Left</p>
+                <p><span class="key">S</span> Crouch</p>
+                <p><span class="key">D</span> Move Right</p>
+                <p><span class="key">Space</span> Attack</p>
+            </div>
+            <div class="keys">
+                <h1>Player 2</h1>
+                <p><span class="key">↑</span> Jump</p>
+                <p><span class="key">←</span> Move Left</p>
+                <p><span class="key">↓</span> Crouch</p>
+                <p><span class="key">→</span> Move Right</p>
+                <p><span class="key">Alt</span> Attack</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="footer">
+        &copy; 2025 Epic Fighting Arena - Get Ready For Battle!
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.10.4/gsap.min.js"></script>
+    <script type="module" src="./js/index.js"></script>
+</body>
+</html>
